@@ -86,6 +86,9 @@ int main(int argc, char **argv) {
   Glib::ustring color_str;
   double alpha = 0.5;
   bool show_version = false;
+  bool show_date = default_config.show_date;
+  bool no_date = false;
+  Glib::ustring date_format;
 
   Glib::OptionContext context;
   Glib::OptionGroup group("options", "Position Options");
@@ -148,6 +151,21 @@ int main(int argc, char **argv) {
       "Text color (hex format: RGB, RGBA, RRGGBB, or RRGGBBAA)");
   group.add_entry(entry, color_str);
 
+  entry.set_long_name("show-date");
+  entry.set_short_name('D');
+  entry.set_description("Show the date below the time (default: true)");
+  group.add_entry(entry, show_date);
+
+  entry.set_long_name("no-date");
+  entry.set_description("Hide the date line, leaving a time-only clock");
+  group.add_entry(entry, no_date);
+
+  entry.set_long_name("date-format");
+  entry.set_short_name('d');
+  entry.set_description(
+      "strftime format for the date line (default: \"%x\")");
+  group.add_entry(entry, date_format);
+
   Glib::OptionEntry font_entry;
   font_entry.set_long_name("font-family");
   font_entry.set_short_name('F');
@@ -204,6 +222,10 @@ int main(int argc, char **argv) {
         config.font_family = font_family.raw();
       }
       config.font_size = font_size;
+      config.show_date = show_date && !no_date;
+      if (!date_format.empty()) {
+        config.date_format = date_format.raw();
+      }
 
       if (!color_str.empty()) {
         double r, g, b, a;

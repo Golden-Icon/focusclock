@@ -28,6 +28,18 @@ private:
   void calculate_next_update();
   void invalidate_cache();
 
+  // Geometry of the time line alone, i.e. the window size the upstream
+  // single-line clock would have used. The time's font size is always derived
+  // from these, so adding the date line never resizes the time.
+  static int s_base_width;
+  static int s_base_height;
+
+  // Picks the date font size that makes the date's rendered width match the
+  // time's rendered width, never exceeding base_size.
+  double compute_date_font_size(const Cairo::RefPtr<Cairo::Context> &cr,
+                                double base_size, const std::string &time_str,
+                                const std::string &date_str) const;
+
   ClockConfig m_config;
   time_t m_next_update;
 

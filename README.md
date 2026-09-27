@@ -4,46 +4,51 @@ Bigass clock that sits on top of all windows to help you focus.
 
 ![Screenshot](./.github/screenshot.png)
 
+A fork of [KorigamiK/focusclock](https://github.com/KorigamiK/focusclock) that
+adds an optional date line under the time. See [Date line](#date-line).
+
 ## Install
 
-Arch Linux users can install the package from the AUR:
+This fork is not published to any package repository. The upstream routes below
+give you a clock **without** the date line:
 
-```sh
-yay -S focusclock-git
-```
+| Route | Includes the date line? |
+| --- | --- |
+| AUR `focusclock-git` | No — builds upstream |
+| Homebrew `korigamik/tap/focusclock` | No — upstream |
+| Upstream [releases](https://github.com/KorigamiK/focusclock/releases) | No — upstream binaries |
 
-macOS users can install it with Homebrew:
-
-```sh
-brew install korigamik/tap/focusclock
-```
-
-Prebuilt Linux, Windows and universal macOS binaries are attached to each
-[GitHub release](https://github.com/KorigamiK/focusclock/releases).
-
-Or you can build it from source
+Build it from source instead.
 
 ## Building
 
-Requires Gtkmm4, gtk4-layer-shell, CMake, pkg-config.
+Requires gtkmm4, gtk4-layer-shell, CMake and pkg-config. If gtk4-layer-shell is
+not found the build still succeeds, but the clock cannot float above other
+windows and `--layer` is unavailable.
 
+On Arch / CachyOS:
+
+```sh
+sudo pacman -S cmake pkgconf gtkmm-4.0 gtk4-layer-shell
 ```
-mkdir build
-cd build
-cmake ..
-make
+
+On Debian / Ubuntu the equivalents are `cmake`, `pkg-config`,
+`libgtkmm-4.0-dev` and `libgtk4-layer-shell-dev`.
+
+Then build and run:
+
+```sh
+git clone https://github.com/Golden-Icon/focusclock.git
+cd focusclock
+cmake -B build
+cmake --build build
+./build/focusclock --anchor-right --anchor-bottom
 ```
 
-### macOS
+## Keybinds
 
-On macOS the same `cmake` steps build a native Cocoa version instead (only
-Xcode Command Line Tools and CMake needed, no GTK). It floats above all
-windows and fullscreen apps on every Space, ignores the mouse, and has no Dock
-icon. `--layer` maps to window levels (0=desktop, 1=normal, 2=floating,
-3=overlay).
-
-You might also wanna add the keybinds like the following in your Hyprland config
-to your wm or similar:
+To toggle the clock from your window manager, bind a key to kill and restart
+it. In a Hyprland config, for example:
 
 ```
 bind = $mainMod ALT, M, exec, killall -SIGTERM focusclock || focusclock -br -B 70
@@ -56,7 +61,7 @@ options:
 
 ```sh
 Usage:
-  focusclock [OPTION?]
+  focusclock [OPTION…]
 
 Help Options:
   -h, --help              Show help options
@@ -73,10 +78,57 @@ Application Options:
   -R, --margin-right      Margin from the right edge
   -f, --font-size         Base font size
   -c, --color             Text color (hex format: RGB, RGBA, RRGGBB, or RRGGBBAA)
+  -D, --show-date         Show the date below the time (default: true)
+  --no-date               Hide the date line, leaving a time-only clock
+  -d, --date-format       strftime format for the date line (default: "%x")
   -F, --font-family       Font family name
   -a, --alpha             Text opacity (0.0-1.0, overridden by RGBA color)
   -y, --layer             GTK shell layer (0=background, 1=bottom, 2=top, 3=overlay, 4=no_layer)
 ```
+
+### Date line
+
+By default the date is shown underneath the time:
+
+```
+02:47
+09/27/2026
+```
+
+The two lines are centred as a single block, and the time keeps exactly the
+size `--font-size` and the window geometry produce — adding the date does not
+resize it.
+
+The date is **not** given a font size of its own. It is scaled automatically so
+that its rendered width matches the time's, which keeps the clock the same
+overall width whichever date you use. Because a 10-character date has to be
+roughly half the size of a 5-character time to fit that width, longer formats
+produce smaller text.
+
+Scaling is clamped so the date can never be larger than the time, nor smaller
+than 35% of it. A format long enough to hit that floor (for example
+`--date-format "%A %d %B"`) will render narrower than the time rather than
+become illegible.
+
+`--date-format` takes any [strftime](https://man7.org/linux/man-pages/man3/strftime.3.html)
+format, and defaults to `%x`, your locale's short date — `09/27/2026` under
+`en_US`, `27/09/2026` under `en_GB`, and so on. Set an explicit format to pin it
+regardless of locale:
+
+```sh
+# Saturday, 27 September
+focusclock --date-format "%A %d %B"
+
+# 2026-09-27
+focusclock --date-format "%Y-%m-%d"
+```
+
+To go back to a time-only clock, hide the date line:
+
+```sh
+focusclock --no-date
+```
+
 
 ## Changelog
 
